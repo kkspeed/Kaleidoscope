@@ -65,7 +65,7 @@ cgen (S.UnaryOp op a) = do
 cgen (S.BinaryOp "=" (S.Var var) val) = do
   a <- getvar var
   cval <- cgen val
-  store a cval
+  _ <- store a cval
   return cval
 cgen (S.BinaryOp op a b) = do
   case Map.lookup op binops of
