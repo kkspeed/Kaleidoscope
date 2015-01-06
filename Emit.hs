@@ -17,6 +17,7 @@ import Control.Applicative
 import qualified Data.Map as Map
 
 import Codegen
+import JIT
 import qualified Syntax as S
 
 toSig :: [String] -> [(AST.Type, AST.Name)]
@@ -84,10 +85,10 @@ liftError :: ExceptT String IO a -> IO a
 liftError = runExceptT >=> either fail return
 
 codegen :: AST.Module -> [S.Expr] -> IO AST.Module
-codegen mod fns = withContext $ \context ->
-  liftError $ withModuleFromAST context newast $ \m -> do
-    llstr <- moduleLLVMAssembly m
-    putStrLn llstr
-    return newast
-  where modn = mapM codegenTop fns
-        newast = runLLVM mod modn
+codegen mod fns = do
+  res <- runJIT oldast
+  case res of
+    Right newast -> return newast
+    Left  err    -> putStrLn err >> return oldast
+  where modn   = mapM codegenTop fns
+        oldast = runLLVM mod modn
